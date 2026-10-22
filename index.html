@@ -121,7 +121,7 @@ try{const r=await fetch(WORKER,{method:'POST',headers:{'Content-Type':'applicati
 if(!r.ok||d.error){sc.busy=false;render();toast(d.status===429?'Kuota gratis habis, coba lagi nanti':'Error AI: '+(d.detail||d.error||'tidak diketahui'),7000);return}
 if(!Array.isArray(d.items)||!d.items.length){sc.busy=false;render();toast('Makanan tidak terdeteksi, coba foto lain');return}
 sc.it=d.items.slice(0,8).map(x=>{const g=Math.max(10,Math.round(+x.grams)||100),q=100/g;return{n:String(x.name||'Makanan').slice(0,40),g,r:[(+x.kcal||0)*q,(+x.protein||0)*q,(+x.carbs||0)*q,(+x.fat||0)*q]}});
-sc.mock=false;sc.cf=d.source==='cloudflare';sc.meal=defMeal();sc.busy=false;V='res';render()}
+sc.mock=false;sc.cf=d.source==='cloudflare';sc.meal=defMeal();sc.busy=false;V='res';render();if(sc.cf)toast('Gemini gagal ('+d.fallbackReason+'): '+String(d.fallbackDetail||'tanpa keterangan').slice(0,110),8000)}
 catch(x){sc.busy=false;render();toast('Tidak bisa terhubung ke AI. Cek koneksi.')}}
 function home(){const t=today(),d=day(t),T=S.t,st=streak(),n=new Date(),dw=(n.getDay()+6)%7,ds=new Set(S.e.map(x=>x.d));
 let wk='';['Sen','Sel','Rab','Kam','Jum','Sab','Min'].forEach((l,i)=>{const x=new Date(n.getFullYear(),n.getMonth(),n.getDate()-dw+i),k=dk(x),ok=ds.has(k);wk+=`<div class="dl">${l}<div class="dn${ok?' ok':''}${k===t?' tn':''}">${ok?CHK:(k===t?x.getDate():'')}</div></div>`});
