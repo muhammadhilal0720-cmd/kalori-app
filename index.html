@@ -4,6 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Kalori Fun</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="theme-color" content="#F1EEFF">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600&family=Nunito:wght@700;800&display=swap">
 <style>
 :root{--bg:#F1EEFF;--cd:#fff;--ink:#1F1B3A;--mut:#5A5675;--soft:#ECE8FF;--bb:#1F1B3A;--bf:#fff;--lk:#5B3FD6;--gr:#2FBF71;--gf:#9BE7BC;--yf:#FFE08A;--on:#1F1B3A;color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
@@ -69,7 +73,7 @@ textarea{width:100%;min-height:76px;border-radius:14px;border:2px solid var(--so
 .nv.on{background:var(--soft);color:var(--ink)}
 .fab{width:60px;height:60px;margin-top:-34px;border-radius:50%;background:#FF6B57;color:var(--on);border:4px solid var(--cd);display:flex;align-items:center;justify-content:center}
 .nv:has(.fab){color:var(--ink)}
-#ts{position:fixed;left:50%;bottom:calc(104px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--bb);color:var(--bf);padding:10px 16px;border-radius:16px;opacity:0;pointer-events:none;transition:opacity .2s;font-weight:800;z-index:9}
+#ts{max-width:90%;text-align:center;position:fixed;left:50%;bottom:calc(104px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--bb);color:var(--bf);padding:10px 16px;border-radius:16px;opacity:0;pointer-events:none;transition:opacity .2s;font-weight:800;z-index:9}
 #ts.on{opacity:1}
 </style>
 </head>
@@ -108,15 +112,16 @@ const bars=d=>bar('Kalori',d.k,S.t.k,'#FF6B57','')+bar('Protein',d.p,S.t.p,'#4C8
 const list=l=>l.length?l.map(e=>`<div class="rw er"><div style="flex:1"><div>${esc(e.n)}</div><div class="sub">${e.m} · ${e.g?e.g+' g':'1 porsi'}</div></div><b class="t">${fm(e.k)} kkal</b><button class="ic" data-a="del" data-id="${e.id}" aria-label="Hapus ${esc(e.n)}">${TR}</button></div>`).join(''):'<div class="sub">Belum ada catatan.</div>';
 const NV=a=>'<div class="nav">'+[['home','Beranda',IH],['cal','Kalender',IC],['scan','Scan',ICM],['menu','Menu',IM],['prof','Profil',IU]].map(([v,l,ic])=>v==='scan'?`<button class="nv" data-a="nav" data-v="scan"><span class="fab">${ic}</span>Scan</button>`:`<button class="nv${a===v?' on':''}" data-a="nav" data-v="${v}"${a===v?' aria-current="page"':''}>${ic}${l}</button>`).join('')+'</div>';
 let V='home',sg=0,sc={img:null,busy:false,it:[],meal:'Siang'};
+let mn={meal:'Siang'};
 const n0=new Date();let cs={y:n0.getFullYear(),m:n0.getMonth(),sel:today()};
 const defMeal=()=>{const h=new Date().getHours();return h<10?'Pagi':h<15?'Siang':h<18?'Camilan':'Malam'};
 const shrink=(u,mx=1024)=>new Promise((ok,no)=>{const im=new Image();im.onload=()=>{const z=Math.min(1,mx/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=Math.round(im.width*z);c.height=Math.round(im.height*z);c.getContext('2d').drawImage(im,0,0,c.width,c.height);ok(c.toDataURL('image/jpeg',.8).split(',')[1])};im.onerror=no;im.src=u});
 async function analyze(){sc.busy=true;render();
 try{const r=await fetch(WORKER,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({image:await shrink(sc.img),mime:'image/jpeg'})});const d=await r.json();
-if(!r.ok||d.error){sc.busy=false;render();toast(d.status===429?'Kuota gratis habis, coba lagi nanti':'AI sedang bermasalah, coba lagi');return}
+if(!r.ok||d.error){sc.busy=false;render();toast(d.status===429?'Kuota gratis habis, coba lagi nanti':'Error AI: '+(d.detail||d.error||'tidak diketahui'),7000);return}
 if(!Array.isArray(d.items)||!d.items.length){sc.busy=false;render();toast('Makanan tidak terdeteksi, coba foto lain');return}
 sc.it=d.items.slice(0,8).map(x=>{const g=Math.max(10,Math.round(+x.grams)||100),q=100/g;return{n:String(x.name||'Makanan').slice(0,40),g,r:[(+x.kcal||0)*q,(+x.protein||0)*q,(+x.carbs||0)*q,(+x.fat||0)*q]}});
-sc.mock=false;sc.meal=defMeal();sc.busy=false;V='res';render()}
+sc.mock=false;sc.cf=d.source==='cloudflare';sc.meal=defMeal();sc.busy=false;V='res';render()}
 catch(x){sc.busy=false;render();toast('Tidak bisa terhubung ke AI. Cek koneksi.')}}
 function home(){const t=today(),d=day(t),T=S.t,st=streak(),n=new Date(),dw=(n.getDay()+6)%7,ds=new Set(S.e.map(x=>x.d));
 let wk='';['Sen','Sel','Rab','Kam','Jum','Sab','Min'].forEach((l,i)=>{const x=new Date(n.getFullYear(),n.getMonth(),n.getDate()-dw+i),k=dk(x),ok=ds.has(k);wk+=`<div class="dl">${l}<div class="dn${ok?' ok':''}${k===t?' tn':''}">${ok?CHK:(k===t?x.getDate():'')}</div></div>`});
@@ -126,7 +131,7 @@ return `<div class="hd"><div><h1>Halo, ${esc(S.u.n||'semangat')}!</h1><div class
 <div class="c"><div class="rw"><div class="ic" style="width:52px;height:52px;background:#FF8A1F">${FL}</div><div><div class="t" style="font-size:22px">${st} hari beruntun</div><div class="sub">${st?'Catat makan hari ini biar apinya nyala':'Catat makanan hari ini untuk mulai streak'}</div></div></div><div style="display:flex;justify-content:space-between">${wk}</div></div>
 <div class="c rw" style="flex-direction:row;gap:14px"><div style="position:relative;width:120px;height:120px;flex:none"><svg width="120" height="120" viewBox="0 0 120 120" role="img" aria-label="Kalori ${fm(d.k)} dari ${fm(T.k)}"><circle cx="60" cy="60" r="50" fill="none" stroke="var(--soft)" stroke-width="14"/><circle cx="60" cy="60" r="50" fill="none" stroke="#FF6B57" stroke-width="14" stroke-linecap="round" stroke-dasharray="${(fr*314.16).toFixed(1)} 314.16" transform="rotate(-90 60 60)"/></svg><div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center"><div class="t" style="font-size:26px;line-height:1">${fm(d.k)}</div><div class="sub" style="font-size:11px">dari ${fm(T.k)} kkal</div></div></div><div style="display:flex;flex-direction:column;gap:6px;align-items:flex-start"><div style="background:var(--bg);border-radius:16px;padding:10px 12px;font-size:14px;line-height:1.3">${msg}</div>${AV(40)}</div></div>
 <div class="c" style="gap:12px">${bars(d)}</div>
-<div class="c"><h2>Catatan hari ini</h2>${list(d.l)}${!S.e.length?'<button class="btn" data-a="seed">Isi data contoh (12 hari)</button>':''}</div>
+<div class="c"><h2>Catatan hari ini</h2>${list(d.l)}<button class="btn" data-a="nav" data-v="man">+ Tambah manual</button>${!S.e.length?'<button class="btn" data-a="seed">Isi data contoh (12 hari)</button>':''}</div>
 <div class="rw" style="justify-content:space-between"><h2>Saran menu hari ini</h2><button class="lk" data-a="sg">Ganti</button></div>
 <div style="display:flex;gap:12px;margin-top:-12px">${mc(sg)}${mc(sg+1)}</div>`}
 function scan(){return `<div class="hd l"><button class="ic" data-a="nav" data-v="home" aria-label="Kembali">${BK}</button><h1>Scan makanan</h1></div>
@@ -134,11 +139,12 @@ function scan(){return `<div class="hd l"><button class="ic" data-a="nav" data-v
 <label class="btn pri" for="fi">Ambil / pilih foto</label><input id="fi" type="file" accept="image/*" capture="environment" hidden>
 <button class="btn dk" data-a="an">${sc.busy?'Menganalisis…':'Analisis foto'}</button>
 <button class="lk" data-a="demo">Pakai foto contoh</button>
+<button class="lk" data-a="nav" data-v="man">Isi manual (tanpa AI)</button>
 <p class="nt">Hasil AI hanyalah perkiraan. Koreksi porsi kalau perlu.</p>`}
 function res(){const it=sc.it.map(nu),T=it.reduce((a,x)=>({k:a.k+x.k,p:a.p+x.p,c:a.c+x.c,f:a.f+x.f}),{k:0,p:0,c:0,f:0});
 return `<div class="hd l"><button class="ic" data-a="again" aria-label="Kembali">${BK}</button><h1>Hasil scan</h1></div>
 <div class="ph" style="height:150px">${sc.img?`<img src="${sc.img}" alt="Foto makanan">`:PL}</div>
-<div class="sub" style="text-align:center">AI mengenali ${it.length} makanan${sc.mock?' (hasil contoh)':''}</div>
+<div class="sub" style="text-align:center">AI mengenali ${it.length} makanan${sc.mock?' (hasil contoh)':sc.cf?' (AI cadangan, perkiraan lebih kasar)':''}</div>
 <div class="c">${it.map((x,i)=>`<div class="rw er"><div style="flex:1"><div>${x.n}</div><div class="rw" style="gap:6px"><button class="ic" data-a="gm" data-i="${i}" data-d="-10" aria-label="Kurangi porsi ${x.n}">−</button><b>${sc.it[i].g} g</b><button class="ic" data-a="gm" data-i="${i}" data-d="10" aria-label="Tambah porsi ${x.n}">+</button></div></div><b class="t" style="font-size:18px">${fm(x.k)} kkal</b></div>`).join('')}</div>
 <div class="c dk"><div class="sub" style="color:inherit;opacity:.8">Total perkiraan</div><div class="t" style="font-size:34px;line-height:1.1">${fm(T.k)} kkal</div><div class="sub" style="color:inherit;opacity:.8">kisaran ${fm(T.k*.9)}–${fm(T.k*1.1)} kkal</div><div style="display:flex;gap:8px;flex-wrap:wrap"><span class="mc">P ${fm(T.p)} g</span><span class="mc">K ${fm(T.c)} g</span><span class="mc">L ${fm(T.f)} g</span></div></div>
 <div style="display:flex;gap:8px;flex-wrap:wrap">${['Pagi','Siang','Malam','Camilan'].map(x=>`<button class="ch${sc.meal===x?' on':''}" data-a="meal" data-m="${x}">${x}</button>`).join('')}</div>
@@ -161,24 +167,32 @@ return `<div class="hd"><h1>Profil</h1></div>
 <div class="c"><h2>Target harian</h2>${ni('data-t','k','Kalori',T.k,'kkal',1200,5000)}${ni('data-t','p','Protein',T.p,'g',10,600)}${ni('data-t','c','Karbo',T.c,'g',10,800)}${ni('data-t','f','Lemak',T.f,'g',10,400)}<p class="nt">Target hanya perkiraan umum. Untuk kebutuhan khusus, tanyakan ke ahli gizi.</p></div>
 <div class="c"><h2>Lencana</h2><div style="display:flex">${[7,14,30].map(n=>`<div class="bd"><i class="${b>=n?'e':''}">${n}</i>${n} hari</div>`).join('')}</div></div>
 <div class="c"><h2>Backup data</h2><textarea id="bk" aria-label="Teks backup" placeholder="Tempel teks backup di sini untuk memulihkan"></textarea><div style="display:flex;gap:8px"><button class="btn dk" style="flex:1" data-a="cp">Salin backup</button><button class="btn" style="flex:1;background:var(--soft)" data-a="rs">Pulihkan</button></div></div>`}
-function render(){$('#app').innerHTML=({home,scan,res,cal:calv,menu,prof})[V]()+(V==='scan'||V==='res'?'':NV(V))}
-let tm;const toast=m=>{const t=$('#ts');t.textContent=m;t.classList.add('on');clearTimeout(tm);tm=setTimeout(()=>t.classList.remove('on'),1800)};
+function man(){const ni=(id,l,u,ph)=>`<label class="in"><span>${l}</span><input id="${id}" type="number" inputmode="decimal" min="0" max="5000"${ph?` placeholder="${ph}"`:''}><i>${u}</i></label>`;
+return `<div class="hd l"><button class="ic" data-a="nav" data-v="home" aria-label="Kembali">${BK}</button><h1>Tambah manual</h1></div>
+<div class="c"><label class="in nm"><span>Nama</span><input id="mn" type="text" maxlength="40" placeholder="Contoh: Nasi goreng"></label>${ni('mk','Kalori','kkal','wajib')}${ni('mg','Porsi','g','opsional')}${ni('mp','Protein','g','opsional')}${ni('mc','Karbo','g','opsional')}${ni('mf','Lemak','g','opsional')}</div>
+<div style="display:flex;gap:8px;flex-wrap:wrap">${['Pagi','Siang','Malam','Camilan'].map(x=>`<button class="ch${mn.meal===x?' on':''}" data-a="mmeal" data-m="${x}">${x}</button>`).join('')}</div>
+<button class="btn pri" data-a="msv">Simpan ke hari ini</button>`}
+function render(){$('#app').innerHTML=({home,scan,res,cal:calv,menu,prof,man})[V]()+(V==='scan'||V==='res'||V==='man'?'':NV(V))}
+let tm;const toast=(m,ms=1800)=>{const t=$('#ts');t.textContent=m;t.classList.add('on');clearTimeout(tm);tm=setTimeout(()=>t.classList.remove('on'),ms)};
 const add=(m,n,g,k,p,c,f)=>S.e.push({id:'e'+Date.now()+Math.random().toString(36).slice(2,6),d:today(),m,n,g,k,p,c,f});
 function seed(){const t=new Date();for(let i=1;i<=12;i++){const k=dk(new Date(t.getFullYear(),t.getMonth(),t.getDate()-i));for(let j=0;j<3+(i%2);j++){const x=M[(i+j*2)%6];S.e.push({id:k+j,d:k,m:x.m,n:x.n,g:0,k:x.k,p:x.p,c:x.c,f:x.f})}}save()}
 document.addEventListener('click',e=>{const b=e.target.closest('[data-a]');if(!b)return;const a=b.dataset.a,D=b.dataset;
-if(a==='nav'){V=D.v;if(V==='scan')sc={img:null,busy:false,it:[],meal:sc.meal}}
+if(a==='nav'){V=D.v;if(V==='scan')sc={img:null,busy:false,it:[],meal:sc.meal};if(V==='man')mn={meal:defMeal()}}
 else if(a==='sg')sg+=2;
 else if(a==='addm'){const x=M[+D.i];add(x.m,x.n,0,x.k,x.p,x.c,x.f);save();toast('Tercatat!')}
 else if(a==='del'){S.e=S.e.filter(x=>x.id!==D.id);save()}
 else if(a==='seed')seed();
 else if(a==='an'||a==='demo'){if(sc.busy)return;if(a==='an'){if(!sc.img){toast('Pilih foto dulu, atau pakai foto contoh');return}analyze();return}
-sc.busy=true;render();setTimeout(()=>{sc.it=SC[Math.floor(Math.random()*SC.length)].map(([k,g])=>({n:FD[k][0],g,r:FD[k].slice(1)}));sc.mock=true;sc.meal=defMeal();sc.busy=false;V='res';render()},1100);return}
+sc.busy=true;render();setTimeout(()=>{sc.it=SC[Math.floor(Math.random()*SC.length)].map(([k,g])=>({n:FD[k][0],g,r:FD[k].slice(1)}));sc.mock=true;sc.cf=false;sc.meal=defMeal();sc.busy=false;V='res';render()},1100);return}
 else if(a==='gm'){const it=sc.it[+D.i];it.g=Math.min(1000,Math.max(10,it.g+ +D.d))}
 else if(a==='meal')sc.meal=D.m;
 else if(a==='sv'){sc.it.map(nu).forEach((x,i)=>add(sc.meal,x.n,sc.it[i].g,Math.round(x.k),+x.p.toFixed(1),+x.c.toFixed(1),+x.f.toFixed(1)));save();V='home';toast('Tersimpan ke hari ini')}
 else if(a==='again'){V='scan';sc={img:null,busy:false,it:[],meal:sc.meal}}
 else if(a==='cm'){cs.m+=+D.d;if(cs.m<0){cs.m=11;cs.y--}if(cs.m>11){cs.m=0;cs.y++}}
 else if(a==='sel')cs.sel=D.d;
+else if(a==='mmeal'){mn.meal=D.m;document.querySelectorAll('[data-a=mmeal]').forEach(x=>x.classList.toggle('on',x===b));return}
+else if(a==='msv'){const nv=id=>Math.max(0,+$('#'+id).value||0),k=nv('mk');if(!(k>0)){toast('Isi kalori dulu ya');return}
+add(mn.meal,($('#mn').value.trim()||'Makanan manual').slice(0,40),Math.round(nv('mg')),Math.round(k),nv('mp'),nv('mc'),nv('mf'));save();V='home';toast('Tersimpan ke hari ini')}
 else if(a==='cp'){const j=JSON.stringify(S),ta=$('#bk');ta.value=j;ta.select();try{navigator.clipboard.writeText(j).then(()=>toast('Backup disalin'),()=>toast('Salin manual dari kotak teks'))}catch(x){toast('Salin manual dari kotak teks')}return}
 else if(a==='rs'){try{const o=JSON.parse($('#bk').value);if(!Array.isArray(o.e))throw 0;S={e:o.e,t:Object.assign(S.t,o.t),u:Object.assign(S.u,o.u)};save();toast('Data dipulihkan')}catch(x){toast('Teks backup tidak valid');return}}
 render();window.scrollTo(0,0)});
